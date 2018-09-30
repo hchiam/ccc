@@ -1,0 +1,47 @@
+<div id="progressBar">
+  <div id="progress"></div>
+</div>
+<div id='app'>
+  <input id='input' 
+         class='input' 
+         v-model='input' 
+         placeholder='Type a sentence here, like "computer says words"' 
+         v-on:keyup='delayedParse()'>
+  <button v-on:click='enterExample()'>Example</button>
+  <button v-on:click='clearCode()'>Clear</button>
+  <button v-on:click='runUnitTests()'>Unit tests</button>
+  <button v-on:click='openInTestMode()'>Debug</button>
+  <button id='prompt' 
+          v-if='prompt' 
+          v-on:click='setFocusToInput();say("Please enter the value.")' 
+          v-cloak>{{ prompt }}</button>
+  <div class='code-block' 
+       v-if='code'>
+    <h4 class='code-block' 
+        style='margin: 0px'>Click this code to run it:</h4>
+    <pre id='code' 
+         class='code' 
+         title='Click to run code' 
+         v-on:click='runCode()' 
+         v-cloak>{{ code }}</pre>
+    <button v-on:click='showJSON = true' 
+            v-show='!showJSON'>Look under the hood</button>
+    <button v-on:click='showJSON = false' 
+            v-show='showJSON'>Close the hood</button>
+    <pre id='under-the-hood' 
+         v-if='showJSON' 
+         v-cloak>{{ definitionsDisplayable }}</pre>
+  </div>
+  <ul>
+    <h4>To-do List:</h4>
+    <li>animate {square:{position:{left:0,top:0},size:0,move:function(where){/*uses built-in library*/square.position=where;}}}</li>
+    <li>"What happens when ... ... ...? -> 'write words' -> ... : includes me making a function version for this.checkUndefined(this.definitions, nameChain);</li>
+    <li>List examples, like "print words" or "say something" or "database server gets data source" or "add one to two"</li>
+    <li>thoroughly test what happens when later adding to existing name chains</li>
+    <li>loops?</li>
+    <li>Update unit tests to include the definitionSection.</li>
+  </ul>
+</div>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js'></script>
+<script src='https://unpkg.com/compromise@latest/builds/compromise.min.js'></script>
+<script src='https://code.responsivevoice.org/responsivevoice.js'></script>
