@@ -7,16 +7,25 @@
          v-model='input' 
          placeholder='Type a sentence here, like "computer says words"' 
          v-on:keyup='delayedParse()'>
-  <button v-on:click='enterExample()'>Example</button>
-  <button v-on:click='clearCode()'>Clear</button>
-  <button v-on:click='runUnitTests()'>Unit tests</button>
-  <button v-on:click='openInTestMode()'>Debug</button>
-  <button id='prompt' 
-          v-if='prompt' 
-          v-on:click='setFocusToInput();say("Please enter the value.")' 
-          v-cloak>{{ prompt }}</button>
+  <div>
+    <button v-on:click='enterExample()'>Example</button>
+    <button v-on:click='clearCode()'>Clear</button>
+    <button v-on:click='runUnitTests()'>Unit tests</button>
+    <button v-on:click='openInTestMode()'>Debug</button>
+    <button v-on:click='disableVoice()' 
+            v-show='voiceEnabled' 
+            v-cloak>Disable voice</button>
+    <button v-on:click='disableVoice()' 
+            v-show='!voiceEnabled' 
+            v-cloak>Enable voice</button>
+    <button id='prompt' 
+            v-if='prompt' 
+            v-on:click='setFocusToInput();say("Please enter the value.")' 
+            v-cloak>{{ prompt }}</button>
+  </div>
   <div class='code-block' 
-       v-if='code'>
+       v-if='code'
+       v-cloak>
     <h4 class='code-block' 
         style='margin: 0px'>Click this code to run it:</h4>
     <pre id='code' 
