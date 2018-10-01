@@ -21,7 +21,8 @@ var app = new Vue({
     runningUnitTests: false,
     definitions: {},
     definitionsDisplayable: {},
-    showJSON: false
+    showJSON: false,
+    voiceEnabled: true
   },
 
   methods: {
@@ -281,7 +282,7 @@ var app = new Vue({
     },
 
     parsePromptResponse: function() {
-      let response = this.input;
+      let response = this.input.replace(' ','').replace('\\','');
       let attemptedNumber = nlp(response).values().toNumber().out('text');
       let isNotOmittingOtherWords = nlp(response).match('!#Value').out() == '';
       if (attemptedNumber != '' && isNotOmittingOtherWords) {
@@ -495,9 +496,15 @@ var app = new Vue({
       eval(this.code);
     },
 
+    disableVoice: function() {
+      this.voiceEnabled = !this.voiceEnabled;
+    },
+
     say: function(words) {
-      // uses external library
-      responsiveVoice.speak(words, 'UK English Male');
+      if (this.voiceEnabled) {
+        // uses external library
+        responsiveVoice.speak(words, 'UK English Male');
+      }
     },
 
     isSpecialCase: function(input) {
