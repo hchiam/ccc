@@ -22,7 +22,13 @@ var app = new Vue({
     definitions: {},
     definitionsDisplayable: {},
     showJSON: false,
-    voiceEnabled: true
+    voiceEnabled: true,
+    shape: {
+      position: {
+        x: 0,
+        y: 0
+      }
+    }
   },
 
   methods: {
@@ -109,10 +115,11 @@ var app = new Vue({
         }
         noun1 = this.parseName(noun1).trim().replace(/ /g,'.');
         // noun [verb] noun
-        let verb = nlp(match).match('#Verb').out('text').trim();
-        verb = nlp(verb).verbs().conjugate()[0].Infinitive;
+        let verb = nlp(match).match('(#Verb|is)').out('text').trim();
+        let adverb = verb.substr(verb.indexOf(' ')+1);
+        verb = nlp(verb.split(' ')[0]).verbs().conjugate()[0].Infinitive;
         // noun verb [noun]
-        let noun2group = nlp(nlp(match).match('#Verb [.+]').out('text')).match('(#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value)+').out('array');
+        let noun2group = nlp(nlp(match).match('#Verb [.+]').out('text')).match('(#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value|value)+').out('array');
         let noun2groups = [];
         let noun2groupString = '';
         for (let g of noun2group) {
@@ -161,7 +168,7 @@ var app = new Vue({
 
     parseName: function(adjectivesAndNouns) {
       let adjectives = nlp(adjectivesAndNouns).adjectives().out('array');
-      let nouns = nlp(adjectivesAndNouns).nouns().out('array');
+      let nouns = nlp(adjectivesAndNouns).match('(#Noun|value)').out('array');
       let adjectivesAttached = '';
       for (let i=0; i<adjectives.length; i++) {
         if (i == 0) {
@@ -213,20 +220,26 @@ var app = new Vue({
         parameters[i] = parameters[i].split('.').pop();
       }
       let objectToAddTo = {};
-      objectToAddTo = this.definitionsDisplayable;
       if (!this.isSpecialRecognizedVerb(verb)) {
-        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, `function(${parameters.join(',')}) { alert(${parameters.join(',')}); }`);
         objectToAddTo = this.definitions;
         this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, function(parameters) { alert(parameters); });
         // e.g.: this.definitions.server.get() would be performed by: 
         // i.e.: this.definitions[parent][child][verb]();
+        objectToAddTo = this.definitionsDisplayable;
+        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, `function(${parameters.join(',')}) { alert(${parameters.join(',')}); }`);
       } else {
         // specially-recognized verbs
         if (verb == 'say') {
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, `function(words) { /*uses external library*/responsiveVoice.speak(words, 'UK English Male'); }`);
           objectToAddTo = this.definitions;
-          // this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, function(words) { /*uses external library*/responsiveVoice.speak(words, 'UK English Male'); });
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.say);
+          objectToAddTo = this.definitionsDisplayable;
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(words) { /*uses external library*/responsiveVoice.speak(words, 'UK English Male'); }");
+        } else if (verb == 'move') {
+          this.updateDefinitions('shape.position');
+          objectToAddTo = this.definitions;
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.move);
+          objectToAddTo = this.definitionsDisplayable;
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(place) { if (place == 'top') {shape.position = {x:50,y:0};} else if (place == 'bottom') {shape.position = {x:50,y:100};} else if (place == 'left') {shape.position.x -= 25;} else if (place == 'right') {shape.position.x += 25;} else if (place == 'up') {shape.position.y -= 25;} else if (place == 'down') {shape.position.y += 25;} alert(JSON.stringify(shape.position)); }");
         }
       }
     },
@@ -282,11 +295,14 @@ var app = new Vue({
     },
 
     parsePromptResponse: function() {
-      let response = this.input.replace(' ','').replace('\\','');
+      let response = this.input.replace(/\\/g,'');
       let attemptedNumber = nlp(response).values().toNumber().out('text');
       let isNotOmittingOtherWords = nlp(response).match('!#Value').out() == '';
+      let isJSON = isJson(response);
       if (attemptedNumber != '' && isNotOmittingOtherWords) {
         response = attemptedNumber;
+      } else if (isJSON) {
+        // use response;
       } else {
         response = '"' + response + '"';
       }
@@ -382,7 +398,7 @@ var app = new Vue({
     },
 
     isSpecialRecognizedVerb: function(verb) {
-      return (verb == 'say');
+      return (verb == 'say') || (verb == 'move');
     },
 
     addCodeLandmarks: function() {
@@ -507,6 +523,25 @@ var app = new Vue({
       }
     },
 
+    move: function(place) {
+      // this.shape.position.x = place.x;
+      // this.shape.position.y = place.y;
+      if (place == 'top') {
+        this.shape.position = {x:50,y:0};
+      } else if (place == 'bottom') {
+        this.shape.position = {x:50,y:100};
+      } else if (place == 'left') {
+        this.shape.position.x -= 25;
+      } else if (place == 'right') {
+        this.shape.position.x += 25;
+      } else if (place == 'up') {
+        this.shape.position.y -= 25;
+      } else if (place == 'down') {
+        this.shape.position.y += 25;
+      }
+      alert(JSON.stringify(this.shape.position));
+    },
+
     isSpecialCase: function(input) {
       return input.toLowerCase().replace(/[?,.'"]/g,'') == 'what does the fox say';
     },
@@ -529,3 +564,8 @@ var app = new Vue({
 
   }
 });
+
+function isJson(str) {
+  // TODO: improve this
+  return str[0] == '{' && str[str.length-1] == '}';
+}
