@@ -1,8 +1,3 @@
-// // test code for animation:
-// var o = {square:{position:{left:0,top:0},size:0,move:function(x,y){o.square.position={left:x,top:y};}}}
-// o.square.move(2,3);
-// alert(JSON.stringify(o.square.position));
-
 var app = new Vue({
   el: '#app',
 
@@ -23,10 +18,11 @@ var app = new Vue({
     definitionsDisplayable: {},
     showJSON: false,
     voiceEnabled: true,
+    showAnimationScreen: false,
     shape: {
       position: {
-        x: 0,
-        y: 0
+        x: 50,
+        y: 50
       }
     }
   },
@@ -162,7 +158,7 @@ var app = new Vue({
 
     updateCode: function() {
       this.definitionSection = this.parseDefinitions();
-      this.code = '// VARIABLES and FUNCTIONS:\n' + this.definitionSection + '\n' + '// USAGE:\n' + this.usageSection;
+      this.code = '// VARIABLES and FUNCTIONS:\n' + this.definitionSection + '\n' + '// USAGE:\nthis.resetSharedVariables();\n' + this.usageSection;
       this.input = '';
     },
 
@@ -235,11 +231,14 @@ var app = new Vue({
           objectToAddTo = this.definitionsDisplayable;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(words) { /*uses external library*/responsiveVoice.speak(words, 'UK English Male'); }");
         } else if (verb == 'move') {
-          this.updateDefinitions('shape.position');
+          // NOT this.updateDefinitions('shape.position');
+          this.definitions['shape'] = {position:{x:50,y:50}};
+          this.definitionsDisplayable['shape'] = {position:{x:50,y:50}};
           objectToAddTo = this.definitions;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.move);
           objectToAddTo = this.definitionsDisplayable;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(place) { if (place == 'top') {shape.position = {x:50,y:0};} else if (place == 'bottom') {shape.position = {x:50,y:100};} else if (place == 'left') {shape.position.x -= 25;} else if (place == 'right') {shape.position.x += 25;} else if (place == 'up') {shape.position.y -= 25;} else if (place == 'down') {shape.position.y += 25;} alert(JSON.stringify(shape.position)); }");
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(place) {\n  if (place == 'top') {\n    shape.position = {x:50,y:0};\n  } else if (place == 'bottom') {\n    shape.position = {x:50,y:100};\n  } else if (place == 'middle') {\n    shape.position = {x:50,y:50};\n  } else if (place == 'left') {\n    shape.position = {x:shape.position.x-25,y:shape.position.y};\n  } else if (place == 'right') {\n    shape.position = {x:shape.position.x+25,y:shape.position.y};\n  } else if (place == 'up') {\n    shape.position = {x:shape.position.x,y:shape.position.y-25};\n  } else if (place == 'down') {\n    shape.position = {x:shape.position.x,y:shape.position.y+25};\n  }\n  actuallyMove(shape.position);\n}");
+          this.showAnimationScreen = true;
         }
       }
     },
@@ -346,14 +345,14 @@ var app = new Vue({
       let definition = '';
       if (typeof d[k] == 'object') {
         for (let key in d[k]) {
-          nameChain = nameChain + '.' + key;
+          let nameChain2 = nameChain + '.' + key;
           if (typeof d[k][key] == 'object') {
             // nested variables
-            definition += nameChain + ' = {};\n';
-            definition += this.parseDefinitionProperties(d[k], key, nameChain);
+            definition += nameChain2 + ' = {};\n';
+            definition += this.parseDefinitionProperties(d[k], key, nameChain2);
           } else {
             // function
-            definition += nameChain + ' = ' + d[k][key] + ';\n';
+            definition += nameChain2 + ' = ' + d[k][key] + ';\n';
           }
         }
       } else {
@@ -530,16 +529,22 @@ var app = new Vue({
         this.shape.position = {x:50,y:0};
       } else if (place == 'bottom') {
         this.shape.position = {x:50,y:100};
+      } else if (place == 'middle') {
+        this.shape.position = {x:50,y:50};
       } else if (place == 'left') {
-        this.shape.position.x -= 25;
+        this.shape.position = {x:this.shape.position.x-25,y:this.shape.position.y};
+        // this.shape.position.x -= 25;
       } else if (place == 'right') {
-        this.shape.position.x += 25;
+        this.shape.position = {x:this.shape.position.x+25,y:this.shape.position.y};
+        // this.shape.position.x += 25;
       } else if (place == 'up') {
-        this.shape.position.y -= 25;
+        this.shape.position = {x:this.shape.position.x,y:this.shape.position.y-25};
+        // this.shape.position.y -= 25;
       } else if (place == 'down') {
-        this.shape.position.y += 25;
+        this.shape.position = {x:this.shape.position.x,y:this.shape.position.y+25};
+        // this.shape.position.y += 25;
       }
-      alert(JSON.stringify(this.shape.position));
+      actuallyMove(this.shape.position);
     },
 
     isSpecialCase: function(input) {
@@ -560,6 +565,13 @@ var app = new Vue({
       this.usageSection = 'fox.say();'
       this.updateCode();
       this.input = '';
+    },
+
+    resetSharedVariables: function() {
+      // shared variables
+      delay = 0;
+      // reset vue variables
+      this.move('middle');
     }
 
   }
@@ -568,4 +580,16 @@ var app = new Vue({
 function isJson(str) {
   // TODO: improve this
   return str[0] == '{' && str[str.length-1] == '}';
+}
+
+// shared variable
+let delay = 0;
+
+function actuallyMove(where) {
+  let w = where;
+  delay += 500;
+  setTimeout(function() {
+    document.getElementById("shape").setAttribute('x', w.x);
+    document.getElementById("shape").setAttribute('y', w.y)
+  }, delay);
 }
