@@ -19,6 +19,7 @@ var app = new Vue({
     showJSON: false,
     voiceEnabled: true,
     showAnimationScreen: false,
+    showPopup: true,
     shape: {
       position: {
         x: 50,
@@ -31,9 +32,17 @@ var app = new Vue({
 
     enterExample: function() {
       this.clearCode();
-      this.input = 'server database gets data source';
-      this.delayedParse();
+      // this.input = 'server database gets data source';
+      // this.delayedParse();
+      this.voiceEnabled = false;
+      this.showPopup = false;
+      this.input = 'move to the top';
+      this.parse();
+      this.input = 'top';
+      this.parse();
       this.setFocusToInput();
+      this.voiceEnabled = true;
+      this.showPopup = true;
     },
 
     clearCode: function() {
@@ -102,10 +111,10 @@ var app = new Vue({
 
     parseCode: function() { // (see parse: function())
       let input = this.input;
-      let matches = nlp(input).match('(the|a|an|#Adjective)? #Noun+? #Adverb? #Verb (#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value)+? .+?').out('array');
+      let matches = nlp(input).match('(the|a|an|#Adjective)? #Noun+? #Adverb? (#Verb|is) (#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value)+? .+?').out('array');
       for (let match of matches) {
         // [noun] verb noun
-        let noun1 = nlp(match).match('[(the|a|an|#Adjective)? #Noun+] #Adverb? #Verb').out();
+        let noun1 = nlp(match).match('[(the|a|an|#Adjective)? #Noun+] #Adverb? (#Verb|is)').out();
         if (noun1 !== '') {
           this.createVariablesFromChain(noun1);
         }
@@ -115,7 +124,7 @@ var app = new Vue({
         let adverb = verb.substr(verb.indexOf(' ')+1);
         verb = nlp(verb.split(' ')[0]).verbs().conjugate()[0].Infinitive;
         // noun verb [noun]
-        let noun2group = nlp(nlp(match).match('#Verb [.+]').out('text')).match('(#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value|value)+').out('array');
+        let noun2group = nlp(nlp(match).match('(#Verb) [.+]').out('text')).match('(#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value|value|.)+').out('array');
         let noun2groups = [];
         let noun2groupString = '';
         for (let g of noun2group) {
@@ -145,13 +154,18 @@ var app = new Vue({
             noun2groups.push(name);
           }
         }
-        this.createFunctionFromMatch(noun1,verb,noun2groups);
-        // final output
-        if (noun1 != '') {
-          this.usageSection += noun1 + '.' + verb + '(' + noun2groupString + ');\n';
+        if (verb == 'is') {
+          noun2groups = nlp(match).match(' is [.+]').out('text');
         } else {
-          this.usageSection += verb + '(' + noun2groupString + ');\n';
+          // final output (usage section)
+          if (noun1 !== '') {
+            this.usageSection += noun1 + '.' + verb + '(' + noun2groupString + ');\n';
+          } else {
+            this.usageSection += verb + '(' + noun2groupString + ');\n';
+          }
         }
+        // final output (function)
+        this.createFunctionFromMatch(noun1,verb,noun2groups);
         this.updateCode();
       }
     },
@@ -229,7 +243,7 @@ var app = new Vue({
           objectToAddTo = this.definitions;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.say);
           objectToAddTo = this.definitionsDisplayable;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(words) { /*uses external library*/responsiveVoice.speak(words, 'UK English Male'); }");
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }");
         } else if (verb == 'move') {
           // NOT this.updateDefinitions('shape.position');
           this.definitions['shape'] = {position:{x:50,y:50}};
@@ -239,6 +253,28 @@ var app = new Vue({
           objectToAddTo = this.definitionsDisplayable;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(place) {\n  if (place == 'top') {\n    shape.position = {x:50,y:0};\n  } else if (place == 'bottom') {\n    shape.position = {x:50,y:100};\n  } else if (place == 'middle') {\n    shape.position = {x:50,y:50};\n  } else if (place == 'left') {\n    shape.position = {x:shape.position.x-25,y:shape.position.y};\n  } else if (place == 'right') {\n    shape.position = {x:shape.position.x+25,y:shape.position.y};\n  } else if (place == 'up') {\n    shape.position = {x:shape.position.x,y:shape.position.y-25};\n  } else if (place == 'down') {\n    shape.position = {x:shape.position.x,y:shape.position.y+25};\n  }\n  actuallyMove(shape.position);\n}");
           this.showAnimationScreen = true;
+        } else if (verb == 'is') {
+          let value = '';
+          let isName = nlp(noun2groups).match('#Noun+').found;
+          if (isName) {
+            value = noun2groups.split().join('.').trim();
+          } else {
+            let attemptedNumber = nlp(noun2groups).values().toNumber().out('text');
+            let isNotOmittingOtherWords = nlp(noun2groups).match('!#Value').out() == '';
+            if (attemptedNumber != '' && isNotOmittingOtherWords) {
+              value = attemptedNumber;
+            } else {
+              value = '"' + noun2groups.split().join('.').trim() + '"';
+            }
+          }
+          let alreadyHasValue = this.definitions.hasOwnProperty(noun1);
+          if (alreadyHasValue) {
+            this.usageSection += noun1 + ' = ' + value + ';\n';
+          } else {
+            // alert(noun1)
+            this.definitions[noun1] = value;
+            this.definitionsDisplayable[noun1] = value;
+          }
         }
       }
     },
@@ -297,11 +333,14 @@ var app = new Vue({
       let response = this.input.replace(/\\/g,'');
       let attemptedNumber = nlp(response).values().toNumber().out('text');
       let isNotOmittingOtherWords = nlp(response).match('!#Value').out() == '';
+      let isSupposedToBeNull = (response == 'null' || response == 'nothing');
       let isJSON = isJson(response);
       if (attemptedNumber != '' && isNotOmittingOtherWords) {
         response = attemptedNumber;
       } else if (isJSON) {
         // use response;
+      } else if (isSupposedToBeNull) {
+        response = 'null';
       } else {
         response = '"' + response + '"';
       }
@@ -366,7 +405,7 @@ var app = new Vue({
       if (typeof definitions == 'object') {
         if (this.isEmptyJSON(definitions) && !this.runningUnitTests) {
           // NOTE: do not add text after the '?'
-          this.prompt = 'What is the value of ' + nameChain + '?';
+          this.prompt = 'What is the initial value of ' + nameChain + '?';
           this.say(this.prompt);
           // setTimeout so can this.say at the same time
           setTimeout(this.showPromptPopup);
@@ -385,7 +424,10 @@ var app = new Vue({
     },
 
     showPromptPopup: function() {
-      let response = prompt(this.prompt);
+      let response = this.input;
+      if (this.showPopup) {
+        response = prompt(this.prompt);
+      }
       if (response) {
         this.input = response;
         this.parsePromptResponse();
@@ -397,7 +439,7 @@ var app = new Vue({
     },
 
     isSpecialRecognizedVerb: function(verb) {
-      return (verb == 'say') || (verb == 'move');
+      return (verb == 'say') || (verb == 'move') || (verb == 'is');
     },
 
     addCodeLandmarks: function() {
@@ -457,7 +499,11 @@ var app = new Vue({
         'Get noun chains.',
         'Get array of noun chains.',
         'Store the list of noun chains.',
-        'get the list of chains of nouns'
+        'get the list of chains of nouns',
+        'dog is cat',
+        'variable is nine thousand',
+        'variable is 9000',
+        'say words'
       ];
       return inputs;
     },
@@ -478,7 +524,11 @@ var app = new Vue({
         'get(noun.chains);',
         'get(noun.chains.array);',
         'store(noun.chains.list);',
-        'get(nouns.chains.list);'
+        'get(nouns.chains.list);',
+        'dog = cat;',
+        'variable = 9000;',
+        'variable = 9000;',
+        'say(words);'
       ];
       return outputs;
     },
@@ -518,7 +568,7 @@ var app = new Vue({
     say: function(words) {
       if (this.voiceEnabled) {
         // uses external library
-        responsiveVoice.speak(words, 'UK English Male');
+        responsiveVoice.speak('"' + words + '"', 'UK English Male');
       }
     },
 
@@ -554,12 +604,12 @@ var app = new Vue({
     handleSpecialCase: function() {
       this.definitions = {
         fox: {
-          say: function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-dingeringeding!", 'UK English Male'); }
+          say: function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-ding-ering-a-ding!", 'UK English Male'); }
         }
       };
       this.definitionsDisplayable = {
         fox: {
-          say: `function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-dingeringeding!", 'UK English Male'); }`
+          say: `function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-ding-ering-a-ding!", 'UK English Male'); }`
         }
       };
       this.usageSection = 'fox.say();'
