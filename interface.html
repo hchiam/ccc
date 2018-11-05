@@ -1,81 +1,82 @@
+<h1>⚒ UNDER CONSTRUCTION ⚒</h1>
+
 <div id="progressBar">
-        <div id="progress"></div>
+  <div id="progress"></div>
+</div>
+
+<div id='app'>
+
+  <div id='interface-grid'>
+
+    <div id='main-interface'>
+
+      <input id='input' 
+             class='input' 
+             v-model='input' 
+             placeholder='Type "x is 1", or "say words", or "move to the top".' 
+             v-on:keyup='delayedParse()'>
+      <div>
+        <button v-on:click='enterExample()'>Example</button>
+        <button v-on:click='clearCode()'>Clear</button>
+        <button v-on:click='runUnitTests()'>Unit tests</button>
+        <button v-on:click='openInTestMode()'>Debug</button>
+        <button v-on:click='disableVoice()' 
+                v-show='voiceEnabled'>Disable voice</button>
+        <button v-on:click='disableVoice()' 
+                v-show='!voiceEnabled' 
+                v-cloak>Enable voice</button>
+        <button id='prompt' 
+                v-if='prompt' 
+                v-on:click='setFocusToInput();say("Please enter the value.")' 
+                v-cloak>{{ prompt }}</button>
       </div>
-      
-      <div id='app'>
-      
-        <div id='interface-grid'>
-      
-          <div id='main-interface'>
-      
-            <input id='input' 
-                   class='input' 
-                   v-model='input' 
-                   placeholder='Type "computer says words" or "move to the top"' 
-                   v-on:keyup='delayedParse()'>
-            <div>
-              <button v-on:click='enterExample()'>Example</button>
-              <button v-on:click='clearCode()'>Clear</button>
-              <button v-on:click='runUnitTests()'>Unit tests</button>
-              <button v-on:click='openInTestMode()'>Debug</button>
-              <button v-on:click='disableVoice()' 
-                      v-show='voiceEnabled'>Disable voice</button>
-              <button v-on:click='disableVoice()' 
-                      v-show='!voiceEnabled' 
-                      v-cloak>Enable voice</button>
-              <button id='prompt' 
-                      v-if='prompt' 
-                      v-on:click='setFocusToInput();say("Please enter the value.")' 
-                      v-cloak>{{ prompt }}</button>
-            </div>
-            <div class='code-block' 
-                 v-if='code'
-                 v-cloak>
-              <h4 class='code-block' 
-                  style='margin: 0px'>Click this code to run it:</h4>
-              <pre id='code' 
-                   class='code' 
-                   title='Click this code to run it' 
-                   v-on:click='runCode()' 
-                   v-cloak>{{ code }}</pre>
-              <button v-on:click='showJSON = true' 
-                      v-show='!showJSON'>Look under the hood</button>
-              <button v-on:click='showJSON = false' 
-                      v-show='showJSON'>Close the hood</button>
-              <pre id='under-the-hood' 
-                   v-if='showJSON' 
-                   v-cloak>{{ definitionsDisplayable }}</pre>
-            </div>
-      
-          </div>
-      
-          <div id='animation-screen' 
-               v-if='showAnimationScreen' 
-               v-cloak>
-            <svg v-on:click='runCode()'>
-              <rect id='shape' 
-                    width='20' height='20' 
-                    x='50' y='50' 
-                    rx='5' ry='5'></rect>
-            </svg>
-            <button v-on:click='runCode()'>Replay</button>
-          </div>
-      
-        </div>
-      
-        <ul id='to-do-list'>
-          <h4>To-do List:</h4>
-          <li>figure out how give same variable a new value (append to usage section, not the same thing as definitionsDisplayable)</li>
-          <li>"What happens when ... ... ...? -> 'write words' -> ... : includes me making a function version for this.checkUndefined(this.definitions, nameChain);</li>
-          <li>List examples, like "print words" or "say something" or "database server gets data source" or "add one to two"</li>
-          <li>thoroughly test what happens when later adding to existing name chains</li>
-          <li>loops?</li>
-          <li>Update unit tests to include the definitionSection.</li>
-        </ul>
+      <div class='code-block' 
+           v-if='code'
+           v-cloak>
+        <h4 class='code-block' 
+            style='margin: 0px'>Click on this code to run it:</h4>
+        <pre id='code' 
+             class='code' 
+             title='Click this code to run it' 
+             v-on:click='runCode()' 
+             v-cloak>{{ code }}</pre>
+        <button v-on:click='showJSON = true' 
+                v-show='!showJSON'>Look under the hood</button>
+        <button v-on:click='showJSON = false' 
+                v-show='showJSON'>Close the hood</button>
+        <pre id='under-the-hood' 
+             v-if='showJSON' 
+             v-cloak>{{ definitionsDisplayable }}</pre>
       </div>
-      <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js'></script>
-      <script src='https://unpkg.com/compromise@latest/builds/compromise.min.js'></script>
-      <script src='https://code.responsivevoice.org/responsivevoice.js'></script>
-      <link rel="stylesheet" href="style.css">
-      <script src='brain.js'></script>
-      
+
+    </div>
+
+    <div id='animation-screen' 
+         v-if='showAnimationScreen' 
+         v-cloak>
+      <svg v-on:click='runCode()'>
+        <rect id='shape' 
+              width='20' height='20' 
+              x='50' y='50' 
+              rx='5' ry='5'></rect>
+      </svg>
+      <button v-on:click='runCode()'>Replay</button>
+    </div>
+
+  </div>
+
+  <ul id='to-do-list'>
+    <h4>To-do List:</h4>
+    <li>"cat food is fish" -> no "var cat.food" (b/c ...[noun1] = "cat.food"; see 'is' code)</li>
+    <li>Respond to "add one to two": -> "What happens when ... ... ...? -> 'write words' -> ... : includes me making a function version for this.checkUndefined(this.definitions, nameChain);</li>
+    <li>show example response to question and the example output</li>
+    <li>See notebook: (if, for).</li>
+    <li>inspirations from Scratch: looks (possibly jquery), sounds, sensing</li>
+    <li>unit tests for the variables/functions section (so not just the usage section)</li>
+  </ul>
+</div>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js'></script>
+<script src='https://unpkg.com/compromise@latest/builds/compromise.min.js'></script>
+<script src='https://code.responsivevoice.org/responsivevoice.js'></script>
+<link rel="stylesheet" href="style.css">
+<script src='brain.js'></script>
