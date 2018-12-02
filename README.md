@@ -6,4 +6,10 @@ Live demo: https://codepen.io/hchiam/full/NLVQeo
 
 Conversationally create code with this interactive programming interface. 
 
-You describe the code, and the interface will ask you questions.
+You describe a code instruction, and the interface will ask you questions to implement it.
+
+## Ideas
+
+Maybe encourage clean code thinking?
+
+Higher-order programming?
