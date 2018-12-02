@@ -26,15 +26,24 @@ Enable higher-order programming?
   - Since JSON supports nesting, there can be nesting of functions and variables (all treated as objects).
   - All variables are initialized as JSON objects.
 
-## Examples:
-
-### Hello World:
+## Hello World Example:
 
 **User**: "say something"
 
 **CCC**: "What is the initial value of something?"
 
 **User**: "Hello world!"
+
+This conversation generates this JSON object:
+
+```json
+{
+  "something": "\"Hello world\"",
+  "say": "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }"
+}
+```
+
+Which generates this JS code:
 
 ```js
 // VARIABLES and FUNCTIONS:
@@ -47,3 +56,45 @@ say = function(words) { /*uses external library*/responsiveVoice.speak('"' + wor
 this.resetSharedVariables();
 say(something);
 ```
+
+**Note**: All variables and functions are initialized as JSON objects. This makes creating objects easier, especially ones that contain variables and functions, and even other objects!
+
+## Object Creation Example:
+
+**User**: "fox says words"
+
+**CCC**: "What is the initial value of words?"
+
+**User**: "hi"
+
+This conversation generates this JSON object:
+
+```json
+{
+  "fox": {
+    "say": "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }"
+  },
+  "words": "\"hi\""
+}
+```
+
+Which generates this JS code:
+
+```js
+// VARIABLES and FUNCTIONS:
+var fox = {};
+fox.say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+var words = {};
+words = "hi";
+
+// USAGE:
+this.resetSharedVariables();
+fox.say(words);
+```
+
+### Built-in Things to Try:
+
+Try these:
+* "move to a position" (when you're prompted for a value, enter "top"/"bottom"/"middle"/etc., listed in the if block.)
+* say something
+* "what does the fox say"
