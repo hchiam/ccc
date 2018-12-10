@@ -4,22 +4,22 @@
 
 Live demo: https://codepen.io/hchiam/full/NLVQeo
 
-Conversationally create code with this interactive programming interface. 
+Conversationally create code with this interactive programming interface.
 
 You describe a code instruction, and the interface will ask you questions to implement it.
 
 ## Ideas
 
-This tool encourages clean code thinking?
+Maybe this tool could enable even higher-order programming?
 
-Enable higher-order programming?
+Encourage clean code thinking? Think in terms of nouns and verbs to create more declarative code?
 
 ## Technical Notes
 
-- It uses [compromise.js](https://github.com/spencermountain/compromise) to parse the user input sentence for verbs, nouns, and prepositions.
+- This project uses [compromise.js](https://github.com/spencermountain/compromise) to parse the user input sentence for verbs, nouns, and prepositions.
   - Verbs are treated as function names.
   - Nouns are treated as variables or parameter names.
-  - Prepositions are treated as parameter separators (and maybe as a parameter).
+  - Prepositions _can_ be treated as parameter separators (or as a parameter when there are no nouns, e.g. the "up" in "move up").
 - To make it easier to generate and edit the output code (especially nested objects and functions), I'm trying this out:
   - User input gets turned into functions and variables (treated as objects) stored in one big JS object (instead of relying on lines and line numbers).
   - That JS object is used to generate JavaScript code, to be displayed back to the user.
