@@ -86,3 +86,7 @@ pre { /* keep long function code inside where you can read it */
   height: 125px; /*100%;*/
   background: lightgray;
 }
+
+a:hover {
+  color: greenyellow;
+}

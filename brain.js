@@ -37,9 +37,9 @@ var app = new Vue({
       this.voiceEnabled = false;
       this.showPopup = false;
       this.input = 'move to the top';
-      this.parse();
+      this.attemptParse();
       this.input = 'top';
-      this.parse();
+      this.attemptParse();
       this.setFocusToInput();
       this.voiceEnabled = true;
       this.showPopup = true;
@@ -87,9 +87,15 @@ var app = new Vue({
       this.progress = 0;
       this.progressBar.style.width = '0%';
     },
+    
+    sanitizeInput: function(string) {
+      let notLettersNumbersAndSpaces = /[^\w ]/g;
+      return string.replace(notLettersNumbersAndSpaces, '');
+    },
 
-    parse: function() {
+    attemptParse: function() {
       if (this.input == '') return;
+      this.input = this.sanitizeInput(this.input);
       // account for user responding to prompt
       if (this.prompt) {
         this.parsePromptResponse();
@@ -330,7 +336,7 @@ var app = new Vue({
     },
 
     parsePromptResponse: function() {
-      let response = this.input.replace(/\\/g,'');
+      let response = this.sanitizeInput(this.input);
       let attemptedNumber = nlp(response).values().toNumber().out('text');
       let isNotOmittingOtherWords = nlp(response).match('!#Value').out() == '';
       let isSupposedToBeNull = (response == 'null' || response == 'nothing');
@@ -372,7 +378,7 @@ var app = new Vue({
       let d = this.definitionsDisplayable;
       for (let key in d) {
         if (d.hasOwnProperty(key)) {
-          definitionSection += 'var ' + key + ' = {};\n';
+          definitionSection += 'let ' + key + ' = {};\n';
         }
         let nameChain = key;
         definitionSection += this.parseDefinitionProperties(d, key, nameChain);
@@ -535,7 +541,7 @@ var app = new Vue({
 
     testPassed: function(input, expectedOutput) {
       this.input = input;
-      this.parse();
+      this.attemptParse();
       // if (expectedOutput == this.code) {
       if (expectedOutput + '\n' == this.usageSection) {
         return true;
@@ -557,7 +563,7 @@ var app = new Vue({
     },
 
     runCode: function() {
-      // alert('"Run code" feature coming soon.');
+      // should limit to client-side use only:
       eval(this.code);
     },
 
