@@ -47,17 +47,13 @@ Which generates this JS code:
 
 ```js
 // VARIABLES and FUNCTIONS:
-var something = {};
-something = "Hello world";
-var say = {};
-say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+let something = "Hello world";
+let say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
 
 // USAGE:
 this.resetSharedVariables();
 say(something);
 ```
-
-**Note**: All variables and functions are initialized as JSON objects. This makes creating objects easier, especially ones that contain variables and functions, and even other objects!
 
 ## Object Creation Example:
 
@@ -82,14 +78,55 @@ Which generates this JS code:
 
 ```js
 // VARIABLES and FUNCTIONS:
-var fox = {};
+let fox = {};
 fox.say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
-var words = {};
-words = "hi";
+let words = "hi";
 
 // USAGE:
 this.resetSharedVariables();
 fox.say(words);
+```
+
+**Note**: Nouns that have associated verbs (and nouns) are initialized as JS objects.
+
+If we continue the conversation with the code above:
+
+**User**: "fox mouth eats food"
+
+**CCC**: "What is the initial value of food?"
+
+**User**: "pests"
+
+This conversation re-generates this updated JSON object:
+
+```json
+{
+  "fox": {
+    "say": "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }",
+    "mouth": {
+      "eat": "function(food) { alert(food); }"
+    }
+  },
+  "words": "\"hi\"",
+  "food": "\"pests\""
+}
+```
+
+Which re-generates this JS code:
+
+```js
+// VARIABLES and FUNCTIONS:
+let fox = {};
+fox.say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+fox.mouth = {};
+fox.mouth.eat = function(food) { alert(food); };
+let words = "hi";
+let food = "pests";
+
+// USAGE:
+this.resetSharedVariables();
+fox.say(words);
+fox.mouth.eat(food);
 ```
 
 ### Built-in Things to Try:
