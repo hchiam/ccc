@@ -648,10 +648,12 @@ function isJson(str) {
 let delay = 0;
 
 function actuallyMove(where) {
-  let w = where;
-  delay += 500;
-  setTimeout(function() {
-    document.getElementById("shape").setAttribute('x', w.x);
-    document.getElementById("shape").setAttribute('y', w.y)
-  }, delay);
+  let shape = document.getElementById("shape");
+  if (where && shape) {
+    delay += 500;
+    setTimeout(function() {
+      shape.setAttribute('x', where.x);
+      shape.setAttribute('y', where.y);
+    }, delay);
+  }
 }
