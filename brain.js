@@ -382,7 +382,11 @@ var app = new Vue({
       let d = this.definitionsDisplayable;
       for (let key in d) {
         if (d.hasOwnProperty(key)) {
-          definitionSection += 'let ' + key + ' = {};\n';
+          if (typeof d[key] == 'object') {
+            definitionSection += 'let ' + key + ' = {};\n';
+          } else {
+            definitionSection += 'let ';
+          }
         }
         let nameChain = key;
         definitionSection += this.parseDefinitionProperties(d, key, nameChain);
