@@ -60,7 +60,7 @@ var app = new Vue({
       if (this.input == '') return;
       // parse
       clearTimeout(this.timer);
-      this.timer = setTimeout(this.parse, this.delayToParse);
+      this.timer = setTimeout(this.attemptParse, this.delayToParse);
       // progress bar
       this.progressBar.style.width = '0%';
       clearInterval(this.progressTimer);
