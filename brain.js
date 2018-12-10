@@ -115,7 +115,7 @@ var app = new Vue({
       this.addCodeLandmarks();
     },
 
-    parseCode: function() { // (see parse: function())
+    parseCode: function() { // (see attemptParse: function())
       let input = this.input;
       let matches = nlp(input).match('(the|a|an|#Adjective)? #Noun+? #Adverb? (#Verb|is) (#Preposition|#Conjunction)? (the|a|an|#Adjective)? (#Noun|#Value)+? .+?').out('array');
       for (let match of matches) {
@@ -160,18 +160,20 @@ var app = new Vue({
             noun2groups.push(name);
           }
         }
+        // final output (usage section)
         if (verb == 'is') {
-          noun2groups = nlp(match).match(' is [.+]').out('text');
+          if (noun1 !== '' && noun2groupString !== '') {
+            this.usageSection += noun1 + ' = ' + noun2groupString + ';\n';
+          }
         } else {
-          // final output (usage section)
           if (noun1 !== '') {
             this.usageSection += noun1 + '.' + verb + '(' + noun2groupString + ');\n';
           } else {
             this.usageSection += verb + '(' + noun2groupString + ');\n';
           }
+          // final output (function)
+          this.createFunctionFromMatch(noun1,verb,noun2groups);
         }
-        // final output (function)
-        this.createFunctionFromMatch(noun1,verb,noun2groups);
         this.updateCode();
       }
     },
@@ -263,7 +265,7 @@ var app = new Vue({
           let value = '';
           let isName = nlp(noun2groups).match('#Noun+').found;
           if (isName) {
-            value = noun2groups.split().join('.').trim();
+            value = noun2groups[0].split().join('.').trim();
           } else {
             let attemptedNumber = nlp(noun2groups).values().toNumber().out('text');
             let isNotOmittingOtherWords = nlp(noun2groups).match('!#Value').out() == '';
@@ -277,9 +279,9 @@ var app = new Vue({
           if (alreadyHasValue) {
             this.usageSection += noun1 + ' = ' + value + ';\n';
           } else {
-            // alert(noun1)
-            this.definitions[noun1] = value;
-            this.definitionsDisplayable[noun1] = value;
+            this.updateDefinitions(noun1);
+            // this.definitions[noun1] = value;
+            // this.definitionsDisplayable[noun1] = value;
           }
         }
       }
@@ -304,7 +306,9 @@ var app = new Vue({
     },
 
     updateDefinitionsChain: function(namesArray, objectToAddTo, index) {
-      if (index >= namesArray.length) return;
+      if (index >= namesArray.length) {
+        return;
+      }
       let name = namesArray[index];
       if (!(objectToAddTo.hasOwnProperty(name))) {
         objectToAddTo[name] = {};
@@ -509,7 +513,8 @@ var app = new Vue({
         'dog is cat',
         'variable is nine thousand',
         'variable is 9000',
-        'say words'
+        'say words',
+        'cat food is fish'
       ];
       return inputs;
     },
@@ -534,7 +539,8 @@ var app = new Vue({
         'dog = cat;',
         'variable = 9000;',
         'variable = 9000;',
-        'say(words);'
+        'say(words);',
+        'cat.food = fish;'
       ];
       return outputs;
     },

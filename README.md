@@ -21,10 +21,10 @@ Enable higher-order programming?
   - Nouns are treated as variables or parameter names.
   - Prepositions are treated as parameter separators (and maybe as a parameter).
 - To make it easier to generate and edit the output code (especially nested objects and functions), I'm trying this out:
-  - User input gets turned into functions and variables (treated as objects) stored in one big JSON object (instead of relying on lines and line numbers).
-  - That JSON is used to generate JavaScript code, to be displayed back to the user.
-  - Since JSON supports nesting, there can be nesting of functions and variables (all treated as objects).
-  - All variables are initialized as JSON objects.
+  - User input gets turned into functions and variables (treated as objects) stored in one big JS object (instead of relying on lines and line numbers).
+  - That JS object is used to generate JavaScript code, to be displayed back to the user.
+  - Since JS objects support nesting, there can be nesting of functions and variables (all treated as objects.
+  - All variables are initialized as JS objects.
 
 ## Hello World Example:
 
