@@ -439,7 +439,7 @@ var app = new Vue({
 
     showPromptPopup: function() {
       let response = this.input;
-      if (this.showPopup) {
+      if (this.showPopup && this.prompt) {
         response = prompt(this.prompt);
       }
       if (response) {
