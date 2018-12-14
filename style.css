@@ -46,6 +46,11 @@
   background: blue;
 }
 
+#helper-buttons, 
+#to-do-list {
+  display: none;
+}
+
 #prompt {
   background: red;
 }

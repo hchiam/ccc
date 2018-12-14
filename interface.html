@@ -25,7 +25,7 @@
                 v-model='input' 
                 placeholder='Type "x is 1", or "say something", or "move to a position".' 
                 v-on:keyup='delayedParse()'>
-          <div>
+          <div id='helper-buttons'>
             <button v-on:click='enterExample()'>Example</button>
             <button v-on:click='clearCode()'>Clear</button>
             <button v-on:click='runUnitTests()'>Unit tests</button>
@@ -88,6 +88,7 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js'></script>
     <script src='https://unpkg.com/compromise@latest/builds/compromise.min.js'></script>
     <script src='https://code.responsivevoice.org/responsivevoice.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
     <link rel="stylesheet" href="style.css">
     <script src='brain.js'></script>
   </body>

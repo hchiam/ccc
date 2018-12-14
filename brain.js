@@ -661,3 +661,9 @@ function actuallyMove(where) {
     }, delay);
   }
 }
+
+// perform once on the UI:
+$('#input').one('mouseover', function(){
+  $('#helper-buttons').slideDown(100);
+  $('#to-do-list').slideDown(100);
+});
