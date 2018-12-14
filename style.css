@@ -46,8 +46,7 @@
   background: blue;
 }
 
-#helper-buttons, 
-#to-do-list {
+#helper-buttons {
   display: none;
 }
 
