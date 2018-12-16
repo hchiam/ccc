@@ -91,6 +91,11 @@ pre { /* keep long function code inside where you can read it */
   background: lightgray;
 }
 
+a {
+  padding: 0px;
+  margin: 0px;
+}
+
 a:hover {
   color: greenyellow;
 }
