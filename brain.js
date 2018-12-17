@@ -402,8 +402,9 @@ var app = new Vue({
       // return JSON.stringify(this.definitionsDisplayable, null, 2);
       let definitionSection = '';
       let d = this.definitions;
-      for (let key in d) {
-        if (d.hasOwnProperty(key)) {
+      let dd = this.definitionsDisplayable;
+      for (let key in dd) {
+        if (dd.hasOwnProperty(key)) {
           if (typeof d[key] == 'object') {
             definitionSection += 'let ' + key + ' = {};\n';
           } else {
@@ -415,29 +416,29 @@ var app = new Vue({
           definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
           // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
         } else {
-          definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+          definitionSection += this.parseDefinitionProperties(d, dd, key, nameChain);
         }
       }
       return definitionSection;
     },
 
-    parseDefinitionProperties: function(d, k, nameChain) {
+    parseDefinitionProperties: function(d, dd, k, nameChain) {
       let definition = '';
-      if (typeof d[k] == 'object') {
-        for (let key in d[k]) {
+      if (typeof dd[k] == 'object') {
+        for (let key in dd[k]) {
           let nameChain2 = nameChain + '.' + key;
-          if (typeof d[k][key] == 'object') {
+          if (typeof dd[k][key] == 'object') {
             // nested variables
             definition += nameChain2 + ' = {};\n';
-            definition += this.parseDefinitionProperties(d[k], key, nameChain2);
+            definition += this.parseDefinitionProperties(d[k], dd[k], key, nameChain2);
           } else {
             // function
-            definition += nameChain2 + ' = ' + d[k][key] + ';\n';
+            definition += nameChain2 + ' = ' + dd[k][key] + ';\n';
           }
         }
       } else {
         // value assigned to variable
-        definition += nameChain + ' = ' +  d[k] + ';\n';
+        definition += nameChain + ' = ' +  dd[k] + ';\n';
       }
       return definition;
     },
