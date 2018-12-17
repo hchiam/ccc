@@ -472,21 +472,6 @@ var app = new Vue({
       }
     },
 
-    showPromptPopup: function() {
-      let response = this.input;
-      if (this.showPopup && this.prompt) {
-        response = prompt(this.prompt);
-      }
-      if (response) {
-        this.input = response;
-        this.prompt = '';
-        // TODO: 
-        // this.parsePromptResponse();
-        this.attemptParse();
-        this.input = '';
-      }
-    },
-
     isEmptyJSON: function(obj) {
       return JSON.stringify(obj) === JSON.stringify({})
     },
