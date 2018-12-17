@@ -252,8 +252,8 @@ var app = new Vue({
         // e.g.: this.definitions.server.get() would be performed by: 
         // i.e.: this.definitions[parent][child][verb]();
         objectToAddTo = this.definitionsDisplayable;
-        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
-        // TODO: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
+        // this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
+        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
       } else {
         // specially-recognized verbs
         if (verb == 'say') {
@@ -369,17 +369,16 @@ var app = new Vue({
       }
       
       let variableChainString = this.prompt.replace('?','').split(' ').pop();
-      // TODO: 
-      // let functionStartString = 'What is the implementation of ';
-      // let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
-      // if (isFunction) {
-      //   variableChainString += '.implementation'
-      // }
+      let functionStartString = 'What is the implementation of ';
+      let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
+      if (isFunction) {
+        variableChainString += '.implementation'
+      }
       let variableChainArray = variableChainString.split('.');
-      // TODO: 
-      // if (isFunction) {
-      //   variableChainArray.pop(); // no [implementation] property for displayed definitions
-      // }
+      this.setLeaf(this.definitions, variableChainArray, response);
+      if (isFunction) {
+        variableChainArray.pop(); // no [implementation] property for displayed definitions
+      }
       this.setLeaf(this.definitionsDisplayable, variableChainArray, response);
       this.updateCode();
       this.prompt = '';
@@ -402,8 +401,7 @@ var app = new Vue({
     parseDefinitions: function() {
       // return JSON.stringify(this.definitionsDisplayable, null, 2);
       let definitionSection = '';
-      // let d = this.definitions; // TODO: ?
-      let d = this.definitionsDisplayable;
+      let d = this.definitions;
       for (let key in d) {
         if (d.hasOwnProperty(key)) {
           if (typeof d[key] == 'object') {
@@ -413,13 +411,12 @@ var app = new Vue({
           }
         }
         let nameChain = key;
-        // TODO: 
-        // if (d.hasOwnProperty(key) && (typeof d[key] == 'object') && ('_isFunction_' in d[key])) {
-        //   definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
-        //   // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
-        // } else {
+        if (d.hasOwnProperty(key) && (typeof d[key] == 'object') && ('_isFunction_' in d[key])) {
+          definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
+          // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+        } else {
           definitionSection += this.parseDefinitionProperties(d, key, nameChain);
-        // }
+        }
       }
       return definitionSection;
     },
@@ -452,17 +449,16 @@ var app = new Vue({
     checkUndefined: function(definitions, nameChain) {
       if (typeof definitions == 'object') {
         if (this.isEmptyJSON(definitions) && !this.runningUnitTests) {
-          // TODO: 
-          // let parent = this.getParentAlongNameChain(nameChain);
-          // let isFunction = '_isFunction_' in parent;
-          // if (isFunction) {
-          //   // NOTE: do not add text after the '?'
-          //   let nameChainArray = nameChain.split('.');
-          //   this.prompt = 'What is the implementation of ' + nameChainArray[nameChainArray.length-2] + '?';
-          // } else {
+          let parent = this.getParentAlongNameChain(nameChain);
+          let isFunction = '_isFunction_' in parent;
+          if (isFunction) {
+            // NOTE: do not add text after the '?'
+            let nameChainArray = nameChain.split('.');
+            this.prompt = 'What is the implementation of ' + nameChainArray[nameChainArray.length-2] + '?';
+          } else {
             // NOTE: do not add text after the '?'
             this.prompt = 'What is the initial value of ' + nameChain + '?';
-          // }
+          }
           this.say(this.prompt);
           // setTimeout so can this.say at the same time
           setTimeout(this.showValuePromptPopup);
