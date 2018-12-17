@@ -237,8 +237,8 @@ var app = new Vue({
       
       let functionSetup = {
         _isFunction_: true,
-        parameters: parameters,
-        implementation: {}
+        _parameters_: parameters,
+        _implementation_: {}
       };
 
       let objectToAddTo = {};
@@ -248,8 +248,6 @@ var app = new Vue({
         this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, functionSetup);
         // e.g.: this.definitions.server.get() would be performed by: 
         // i.e.: this.definitions[parent][child][verb]();
-        // TODO?: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
-        // TODO?: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
       } else {
         // specially-recognized verbs
         if (verb == 'say') {
@@ -355,11 +353,11 @@ var app = new Vue({
         response = '"' + response + '"';
       }
       
-      let variableChainString = this.prompt.replace('?','').split(' ').pop();
+      let variableChainString = this.prompt.replace('?','').split(' ').pop(); // assumes last "word" is name chain string
       let functionStartString = 'Implementation: ';
       let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
       if (isFunction) {
-        variableChainString += '.implementation'
+        variableChainString += '._implementation_'
       }
       let variableChainArray = variableChainString.split('.');
       this.setLeaf(this.definitions, variableChainArray, response);
@@ -384,19 +382,23 @@ var app = new Vue({
     parseDefinitions: function() {
       let definitionSection = '';
       let d = this.definitions;
+      let isFunction = false;
       for (let key in d) {
         if (d.hasOwnProperty(key)) {
           if (typeof d[key] == 'object') {
-            definitionSection += 'let ' + key + ' = {};\n';
+            if ('_isFunction_' in d[key]) {
+              isFunction = true;
+              definitionSection += `let ${key} = function(${d[key]._parameters_}) {\n  ${'' + d[key]._implementation_}\n}\n`;
+              // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+            } else {
+              definitionSection += 'let ' + key + ' = {};\n';
+            }
           } else {
             definitionSection += 'let ';
           }
         }
         let nameChain = key;
-        if (d.hasOwnProperty(key) && (typeof d[key] == 'object') && ('_isFunction_' in d[key])) {
-          definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
-          // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
-        } else {
+        if (!isFunction) {
           definitionSection += this.parseDefinitionProperties(d, key, nameChain);
         }
       }
@@ -408,12 +410,15 @@ var app = new Vue({
       if (typeof d[k] == 'object') {
         for (let key in d[k]) {
           let nameChain2 = nameChain + '.' + key;
-          if (typeof d[k][key] == 'object') {
+          if ((typeof d[k][key] == 'object') && ('_isFunction_' in d[k][key])) {
+            // function
+            definition += `${nameChain2} = function(${d[k][key]._parameters_}) {\n  ${d[k][key]._implementation_}\n};\n`;
+          } else if (typeof d[k][key] == 'object') {
             // nested variables
             definition += nameChain2 + ' = {};\n';
             definition += this.parseDefinitionProperties(d[k], key, nameChain2);
           } else {
-            // function
+            // "direct" variable
             definition += nameChain2 + ' = ' + d[k][key] + ';\n';
           }
         }
@@ -430,26 +435,19 @@ var app = new Vue({
 
     checkUndefined: function(definitions, nameChain) {
       if (typeof definitions == 'object') {
-        if (this.isEmptyJSON(definitions) && !this.runningUnitTests) {
-          let parent = this.getParentAlongNameChain(nameChain);
-          let isFunction = '_isFunction_' in parent;
+        let isFunction = '_implementation_' in definitions;
+        let isFunctionHelperVariable = nameChain.split('.').pop().indexOf('_') !== -1;
+        if ((this.isEmptyJSON(definitions) || isFunction) && !this.runningUnitTests) {
           if (isFunction) {
-            // NOTE: do not add text after the '?'
-            let nameChainArray = nameChain.split('.');
-            let closestName = (nameChainArray.length > 2) ? nameChainArray[nameChainArray.length-3] : 'I';
-            let action = nameChainArray[nameChainArray.length-2];
-            if (closestName != 'I') {
-              action = nlp(action).verbs().toPresentTense().out();
-            }
-            this.prompt = `Implementation: What happens when ${closestName} ${action}?`;
-          } else {
-            // NOTE: do not add text after the '?'
+            // NOTE: later processing assumes last "word" in this.prompt is the name chain
+            this.prompt = 'Implementation: What happens when ' + nameChain + '?';
+            this.showValuePromptPopup();
+          } else if (!isFunctionHelperVariable) { // ignore function helper variables
+            // NOTE: later processing assumes last "word" in this.prompt is the name chain
             this.prompt = 'What is the initial value of ' + nameChain + '?';
+            this.showValuePromptPopup();
           }
-          this.say(this.prompt);
-          // setTimeout so can this.say at the same time
-          setTimeout(this.showValuePromptPopup);
-          return;
+          return; // stop the recursion
         }
         for (var key in definitions) {
           if (definitions.hasOwnProperty(key)) {
@@ -461,17 +459,6 @@ var app = new Vue({
           }
         }
       }
-    },
-
-    getParentAlongNameChain: function(nameChain) {
-      let nameChainArray = nameChain.split('.');
-      let hasParent = (nameChainArray.length > 1);
-      if (!hasParent) return {};
-      let parent = this.definitions; // start topmost
-      for (let i=0; i<nameChainArray.length-1; i++) {
-        parent = parent[nameChainArray[i]];
-      }
-      return parent;
     },
 
     showValuePromptPopup: function() {
