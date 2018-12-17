@@ -99,3 +99,8 @@ a {
 a:hover {
   color: greenyellow;
 }
+
+#issues-link {
+  position: relative;
+  bottom: 0;
+}
