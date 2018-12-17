@@ -356,7 +356,7 @@ var app = new Vue({
       }
       
       let variableChainString = this.prompt.replace('?','').split(' ').pop();
-      let functionStartString = 'What is the implementation of ';
+      let functionStartString = 'Implementation: ';
       let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
       if (isFunction) {
         variableChainString += '.implementation'
@@ -436,7 +436,12 @@ var app = new Vue({
           if (isFunction) {
             // NOTE: do not add text after the '?'
             let nameChainArray = nameChain.split('.');
-            this.prompt = 'What is the implementation of ' + nameChainArray[nameChainArray.length-2] + '?';
+            let closestName = (nameChainArray.length > 2) ? nameChainArray[nameChainArray.length-3] : 'I';
+            let action = nameChainArray[nameChainArray.length-2];
+            if (closestName != 'I') {
+              action = nlp(action).verbs().toPresentTense().out();
+            }
+            this.prompt = `Implementation: What happens when ${closestName} ${action}?`;
           } else {
             // NOTE: do not add text after the '?'
             this.prompt = 'What is the initial value of ' + nameChain + '?';
