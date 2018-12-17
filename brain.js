@@ -15,7 +15,6 @@ var app = new Vue({
     prompt: '',
     runningUnitTests: false,
     definitions: {},
-    definitionsDisplayable: {},
     showJSON: false,
     voiceEnabled: true,
     showAnimationScreen: false,
@@ -52,7 +51,6 @@ var app = new Vue({
       this.usageSection = '';
       this.prompt = '';
       this.definitions = {};
-      this.definitionsDisplayable = {};
       this.setFocusToInput();
     },
 
@@ -144,7 +142,6 @@ var app = new Vue({
             }
             let valueVariableName = 'value' + (noun2groups.length+1);
             // this.createVariablesFromChain(valueVariableName);
-            this.definitionsDisplayable[valueVariableName] = value;
             this.definitions[valueVariableName] = value;
             noun2groups.push(valueVariableName);
           } else {
@@ -251,23 +248,17 @@ var app = new Vue({
         this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, functionSetup);
         // e.g.: this.definitions.server.get() would be performed by: 
         // i.e.: this.definitions[parent][child][verb]();
-        objectToAddTo = this.definitionsDisplayable;
-        // this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
-        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
+        // TODO?: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
+        // TODO?: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
       } else {
         // specially-recognized verbs
         if (verb == 'say') {
           objectToAddTo = this.definitions;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, this.say);
-          objectToAddTo = this.definitionsDisplayable;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }");
         } else if (verb == 'move') {
           // NOT this.updateDefinitions('shape.position');
           this.definitions['shape'] = {position:{x:50,y:50}};
-          this.definitionsDisplayable['shape'] = {position:{x:50,y:50}};
           objectToAddTo = this.definitions;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, this.move);
-          objectToAddTo = this.definitionsDisplayable;
           this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, "function(place) {\n  if (place == 'top') {\n    shape.position = {x:50,y:0};\n  } else if (place == 'bottom') {\n    shape.position = {x:50,y:100};\n  } else if (place == 'middle') {\n    shape.position = {x:50,y:50};\n  } else if (place == 'left') {\n    shape.position = {x:shape.position.x-25,y:shape.position.y};\n  } else if (place == 'right') {\n    shape.position = {x:shape.position.x+25,y:shape.position.y};\n  } else if (place == 'up') {\n    shape.position = {x:shape.position.x,y:shape.position.y-25};\n  } else if (place == 'down') {\n    shape.position = {x:shape.position.x,y:shape.position.y+25};\n  }\n  actuallyMove(shape.position);\n}");
           this.showAnimationScreen = true;
         } else if (verb == 'is') {
@@ -290,7 +281,6 @@ var app = new Vue({
           } else {
             this.updateDefinitions(noun1);
             // this.definitions[noun1] = value;
-            // this.definitionsDisplayable[noun1] = value;
           }
         }
       }
@@ -301,15 +291,12 @@ var app = new Vue({
       let isEmptyNoun = (name === '');
       if (isSingleNewNoun) {
         this.definitions[name] = {};
-        this.definitionsDisplayable[name] = {};
       } else if (isEmptyNoun) {
         // do nothing
       } else { // otherwise is a chain of names, like abc.def.ghi
         let namesArray = name.split('.');
         let objectToAddTo = {};
         objectToAddTo = this.definitions;
-        this.updateDefinitionsChain(namesArray, objectToAddTo, 0);
-        objectToAddTo = this.definitionsDisplayable;
         this.updateDefinitionsChain(namesArray, objectToAddTo, 0);
       }
     },
@@ -376,10 +363,6 @@ var app = new Vue({
       }
       let variableChainArray = variableChainString.split('.');
       this.setLeaf(this.definitions, variableChainArray, response);
-      if (isFunction) {
-        variableChainArray.pop(); // no [implementation] property for displayed definitions
-      }
-      this.setLeaf(this.definitionsDisplayable, variableChainArray, response);
       this.updateCode();
       this.prompt = '';
       this.input = '';
@@ -399,12 +382,10 @@ var app = new Vue({
     },
 
     parseDefinitions: function() {
-      // return JSON.stringify(this.definitionsDisplayable, null, 2);
       let definitionSection = '';
       let d = this.definitions;
-      let dd = this.definitionsDisplayable;
-      for (let key in dd) {
-        if (dd.hasOwnProperty(key)) {
+      for (let key in d) {
+        if (d.hasOwnProperty(key)) {
           if (typeof d[key] == 'object') {
             definitionSection += 'let ' + key + ' = {};\n';
           } else {
@@ -416,29 +397,29 @@ var app = new Vue({
           definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
           // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
         } else {
-          definitionSection += this.parseDefinitionProperties(d, dd, key, nameChain);
+          definitionSection += this.parseDefinitionProperties(d, key, nameChain);
         }
       }
       return definitionSection;
     },
 
-    parseDefinitionProperties: function(d, dd, k, nameChain) {
+    parseDefinitionProperties: function(d, k, nameChain) {
       let definition = '';
-      if (typeof dd[k] == 'object') {
-        for (let key in dd[k]) {
+      if (typeof d[k] == 'object') {
+        for (let key in d[k]) {
           let nameChain2 = nameChain + '.' + key;
-          if (typeof dd[k][key] == 'object') {
+          if (typeof d[k][key] == 'object') {
             // nested variables
             definition += nameChain2 + ' = {};\n';
-            definition += this.parseDefinitionProperties(d[k], dd[k], key, nameChain2);
+            definition += this.parseDefinitionProperties(d[k], key, nameChain2);
           } else {
             // function
-            definition += nameChain2 + ' = ' + dd[k][key] + ';\n';
+            definition += nameChain2 + ' = ' + d[k][key] + ';\n';
           }
         }
       } else {
         // value assigned to variable
-        definition += nameChain + ' = ' +  dd[k] + ';\n';
+        definition += nameChain + ' = ' +  d[k] + ';\n';
       }
       return definition;
     },
@@ -685,11 +666,6 @@ var app = new Vue({
 
     handleSpecialCase: function() {
       this.definitions = {
-        fox: {
-          say: function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-ding-ering-a-ding!", 'UK English Male'); }
-        }
-      };
-      this.definitionsDisplayable = {
         fox: {
           say: `function() { /*uses external library*/responsiveVoice.speak("Ring-ding-ding-ding-ding-ering-a-ding!", 'UK English Male'); }`
         }
