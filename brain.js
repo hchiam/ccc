@@ -110,8 +110,7 @@ var app = new Vue({
       }
       // do the actual parsing
       this.parseCode();
-      let nameChain = '';
-      this.checkUndefined(this.definitionsDisplayable, nameChain);
+      this.checkForUndefinedDefinitions();
       this.addCodeLandmarks();
     },
 
@@ -232,34 +231,44 @@ var app = new Vue({
 
     createFunctionFromMatch: function(noun1,verb,noun2groups) {
       let namesArray = noun1.split('.');
-      namesArray.push(verb)
+      namesArray.push(verb);
+      
       let parameters = noun2groups;
       for (let i=0; i<parameters.length; i++) {
         parameters[i] = parameters[i].split('.').pop();
       }
+      
+      let functionSetup = {
+        _isFunction_: true,
+        parameters: parameters,
+        implementation: {}
+      };
+
       let objectToAddTo = {};
+      
       if (!this.isSpecialRecognizedVerb(verb)) {
         objectToAddTo = this.definitions;
-        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, function(parameters) { alert(parameters); });
+        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, functionSetup);
         // e.g.: this.definitions.server.get() would be performed by: 
         // i.e.: this.definitions[parent][child][verb]();
         objectToAddTo = this.definitionsDisplayable;
-        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, `function(${parameters.join(',')}) { alert(${parameters.join(',')}); }`);
+        this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, `function ${verb}(${parameters}) {\n  ${JSON.stringify(functionSetup.implementation)}\n}`);
+        // TODO: this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, {});
       } else {
         // specially-recognized verbs
         if (verb == 'say') {
           objectToAddTo = this.definitions;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.say);
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, this.say);
           objectToAddTo = this.definitionsDisplayable;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }");
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, "function(words) { /*uses external library*/responsiveVoice.speak('\"' + words + '\"', 'UK English Male'); }");
         } else if (verb == 'move') {
           // NOT this.updateDefinitions('shape.position');
           this.definitions['shape'] = {position:{x:50,y:50}};
           this.definitionsDisplayable['shape'] = {position:{x:50,y:50}};
           objectToAddTo = this.definitions;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, this.move);
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, this.move);
           objectToAddTo = this.definitionsDisplayable;
-          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, 0, "function(place) {\n  if (place == 'top') {\n    shape.position = {x:50,y:0};\n  } else if (place == 'bottom') {\n    shape.position = {x:50,y:100};\n  } else if (place == 'middle') {\n    shape.position = {x:50,y:50};\n  } else if (place == 'left') {\n    shape.position = {x:shape.position.x-25,y:shape.position.y};\n  } else if (place == 'right') {\n    shape.position = {x:shape.position.x+25,y:shape.position.y};\n  } else if (place == 'up') {\n    shape.position = {x:shape.position.x,y:shape.position.y-25};\n  } else if (place == 'down') {\n    shape.position = {x:shape.position.x,y:shape.position.y+25};\n  }\n  actuallyMove(shape.position);\n}");
+          this.updateDefinitionsChainForMethod(namesArray, objectToAddTo, "function(place) {\n  if (place == 'top') {\n    shape.position = {x:50,y:0};\n  } else if (place == 'bottom') {\n    shape.position = {x:50,y:100};\n  } else if (place == 'middle') {\n    shape.position = {x:50,y:50};\n  } else if (place == 'left') {\n    shape.position = {x:shape.position.x-25,y:shape.position.y};\n  } else if (place == 'right') {\n    shape.position = {x:shape.position.x+25,y:shape.position.y};\n  } else if (place == 'up') {\n    shape.position = {x:shape.position.x,y:shape.position.y-25};\n  } else if (place == 'down') {\n    shape.position = {x:shape.position.x,y:shape.position.y+25};\n  }\n  actuallyMove(shape.position);\n}");
           this.showAnimationScreen = true;
         } else if (verb == 'is') {
           let value = '';
@@ -316,7 +325,11 @@ var app = new Vue({
       }
     },
 
-    updateDefinitionsChainForMethod: function(namesArray, objectToAddTo, index, method) {
+    updateDefinitionsChainForMethod: function(namesArray, objectToAddTo, method) {
+      this.updateDefinitionsChainForMethodRecursively(namesArray, objectToAddTo, 0, method);
+    },
+
+    updateDefinitionsChainForMethodRecursively: function(namesArray, objectToAddTo, index, method) {
       let name = namesArray[index];
       let isVerbWithoutSubjectNoun = (name === '');
       if (isVerbWithoutSubjectNoun) {
@@ -336,7 +349,7 @@ var app = new Vue({
           return;
         }
       }
-      this.updateDefinitionsChainForMethod(namesArray, objectToAddTo[name], index+1, method);
+      this.updateDefinitionsChainForMethodRecursively(namesArray, objectToAddTo[name], index+1, method);
     },
 
     parsePromptResponse: function() {
@@ -354,10 +367,19 @@ var app = new Vue({
       } else {
         response = '"' + response + '"';
       }
+      
       let variableChainString = this.prompt.replace('?','').split(' ').pop();
+      // TODO: 
+      // let functionStartString = 'What is the implementation of ';
+      // let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
+      // if (isFunction) {
+      //   variableChainString += '.implementation'
+      // }
       let variableChainArray = variableChainString.split('.');
-      this.setLeaf(this.definitions, variableChainArray, response);
-      variableChainArray = variableChainString.split('.');
+      // TODO: 
+      // if (isFunction) {
+      //   variableChainArray.pop(); // no [implementation] property for displayed definitions
+      // }
       this.setLeaf(this.definitionsDisplayable, variableChainArray, response);
       this.updateCode();
       this.prompt = '';
@@ -365,13 +387,14 @@ var app = new Vue({
     },
 
     setLeaf: function(definitions, variableChainArray, value) {
-      let variable = variableChainArray[0];
+      let variableChainArrayNew = variableChainArray.slice();
+      let variable = variableChainArrayNew[0];
       if (definitions.hasOwnProperty(variable)) {
         if (this.isEmptyJSON(definitions[variable])) {
           definitions[variable] = value;
         } else {
-          variableChainArray.shift();
-          this.setLeaf(definitions[variable], variableChainArray, value)
+          variableChainArrayNew.shift();
+          this.setLeaf(definitions[variable], variableChainArrayNew, value)
         }
       }
     },
@@ -379,6 +402,7 @@ var app = new Vue({
     parseDefinitions: function() {
       // return JSON.stringify(this.definitionsDisplayable, null, 2);
       let definitionSection = '';
+      // let d = this.definitions; // TODO: ?
       let d = this.definitionsDisplayable;
       for (let key in d) {
         if (d.hasOwnProperty(key)) {
@@ -389,7 +413,13 @@ var app = new Vue({
           }
         }
         let nameChain = key;
-        definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+        // TODO: 
+        // if (d.hasOwnProperty(key) && (typeof d[key] == 'object') && ('_isFunction_' in d[key])) {
+        //   definitionSection += `function(${d[key].parameters}) {\n  ${'' + d[key].implementation}\n}\n`;
+        //   // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+        // } else {
+          definitionSection += this.parseDefinitionProperties(d, key, nameChain);
+        // }
       }
       return definitionSection;
     },
@@ -415,25 +445,60 @@ var app = new Vue({
       return definition;
     },
 
+    checkForUndefinedDefinitions: function() {
+      this.checkUndefined(this.definitions, '');
+    },
+
     checkUndefined: function(definitions, nameChain) {
       if (typeof definitions == 'object') {
         if (this.isEmptyJSON(definitions) && !this.runningUnitTests) {
-          // NOTE: do not add text after the '?'
-          this.prompt = 'What is the initial value of ' + nameChain + '?';
+          // TODO: 
+          // let parent = this.getParentAlongNameChain(nameChain);
+          // let isFunction = '_isFunction_' in parent;
+          // if (isFunction) {
+          //   // NOTE: do not add text after the '?'
+          //   let nameChainArray = nameChain.split('.');
+          //   this.prompt = 'What is the implementation of ' + nameChainArray[nameChainArray.length-2] + '?';
+          // } else {
+            // NOTE: do not add text after the '?'
+            this.prompt = 'What is the initial value of ' + nameChain + '?';
+          // }
           this.say(this.prompt);
           // setTimeout so can this.say at the same time
-          setTimeout(this.showPromptPopup);
+          setTimeout(this.showValuePromptPopup);
           return;
         }
         for (var key in definitions) {
           if (definitions.hasOwnProperty(key)) {
-            if (nameChain == '') {
+            if (nameChain.length == 0) {
               this.checkUndefined(definitions[key], key);
             } else {
               this.checkUndefined(definitions[key], nameChain + '.' + key);
             }
           }
         }
+      }
+    },
+
+    getParentAlongNameChain: function(nameChain) {
+      let nameChainArray = nameChain.split('.');
+      let hasParent = (nameChainArray.length > 1);
+      if (!hasParent) return {};
+      let parent = this.definitions; // start topmost
+      for (let i=0; i<nameChainArray.length-1; i++) {
+        parent = parent[nameChainArray[i]];
+      }
+      return parent;
+    },
+
+    showValuePromptPopup: function() {
+      let response = this.input;
+      if (this.showPopup && this.prompt) {
+        response = prompt(this.prompt);
+      }
+      if (response) {
+        this.input = response;
+        this.parsePromptResponse();
       }
     },
 
@@ -444,7 +509,11 @@ var app = new Vue({
       }
       if (response) {
         this.input = response;
-        this.parsePromptResponse();
+        this.prompt = '';
+        // TODO: 
+        // this.parsePromptResponse();
+        this.attemptParse();
+        this.input = '';
       }
     },
 
@@ -457,7 +526,7 @@ var app = new Vue({
     },
 
     addCodeLandmarks: function() {
-      return this.code; // TODO
+      return this.code; // TODO: ? may not need if can just use name chain
       let annotatedCode = this.code;
       let codeLines = annotatedCode.split(/{/);
       annotatedCode = '';
