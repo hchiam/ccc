@@ -343,21 +343,24 @@ var app = new Vue({
       let isNotOmittingOtherWords = nlp(response).match('!#Value').out() == '';
       let isSupposedToBeNull = (response == 'null' || response == 'nothing');
       let isJSON = isJson(response);
+      let isFunction = this.prompt.indexOf('Implementation: What happens when') != -1;
       if (attemptedNumber != '' && isNotOmittingOtherWords) {
         response = attemptedNumber;
       } else if (isJSON) {
         // use response;
       } else if (isSupposedToBeNull) {
         response = 'null';
+      } else if (isFunction) {
+        // TODO: parse response as if creating code in the larger scope
+        this.parseCode();
+        return;
       } else {
         response = '"' + response + '"';
       }
       
       let variableChainString = this.prompt.replace('?','').split(' ').pop(); // assumes last "word" is name chain string
-      let functionStartString = 'Implementation: ';
-      let isFunction = this.prompt.substr(0, functionStartString.length) == functionStartString;
       if (isFunction) {
-        variableChainString += '._implementation_'
+        variableChainString += '._implementation_';
       }
       let variableChainArray = variableChainString.split('.');
       this.setLeaf(this.definitions, variableChainArray, response);
@@ -388,7 +391,9 @@ var app = new Vue({
           if (typeof d[key] == 'object') {
             if ('_isFunction_' in d[key]) {
               isFunction = true;
-              definitionSection += `let ${key} = function(${d[key]._parameters_}) {\n  ${'' + d[key]._implementation_}\n}\n`;
+              let parameters = d[key]._parameters_.length > 0 ? d[key]._parameters_ : '';
+              let implementation = d[key]._implementation_.length > 0 ? d[key]._implementation_ : '';
+              definitionSection += `let ${key} = function(${parameters}) {\n  ${'' + implementation}\n}\n`;
               // definitionSection += this.parseDefinitionProperties(d, key, nameChain);
             } else {
               definitionSection += 'let ' + key + ' = {};\n';
