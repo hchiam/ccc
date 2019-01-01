@@ -133,7 +133,7 @@ fox.mouth.eat(food);
 
 Try these:
 * "move to a position" (when you're prompted for a value, enter "top"/"bottom"/"middle"/etc., listed in the if block.)
-* say something
+* "say something"
 * "what does the fox say"
 
 ### Related Work:
