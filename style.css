@@ -11,6 +11,13 @@
   transition: all 0.3s cubic-bezier(.25,.8,.25,1);
 }
 
+#loading {
+  display: inline-block;
+  padding: 10px;
+  background: blue;
+  border-radius: 5px;
+}
+
 #progressBar {
   width: 100%;
   border-radius: 10px;

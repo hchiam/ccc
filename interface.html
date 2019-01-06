@@ -22,15 +22,17 @@
 
     <div id='app'>
 
-      <div id='interface-grid'>
+      <div id='loading' v-if='false'>Loading...</div>
 
-        <div id='main-interface'>
+      <div id='interface-grid' v-cloak>
+
+        <div id='main-interface' v-cloak>
 
           <input id='input' 
                 class='input' 
                 v-model='input' 
                 placeholder='Type "x is 1", or "say something", or "move to a position".' 
-                v-on:keyup='delayedParse()'>
+                v-on:keyup='delayedParse'>
           <div id='helper-buttons'>
             <button v-on:click='enterExample()'>Example</button>
             <button v-on:click='clearCode()'>Clear</button>

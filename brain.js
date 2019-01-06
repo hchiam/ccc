@@ -54,8 +54,15 @@ var app = new Vue({
       this.setFocusToInput();
     },
 
-    delayedParse: function() {
+    delayedParse: function(event) {
       if (this.input == '') return;
+      if (event.key == 'Enter') {
+        clearTimeout(this.timer);
+        clearInterval(this.progressTimer);
+        this.resetProgress();
+        this.attemptParse();
+        return;
+      }
       // parse
       clearTimeout(this.timer);
       this.timer = setTimeout(this.attemptParse, this.delayToParse);
