@@ -10,7 +10,7 @@ You describe a code instruction, and the interface will ask you questions to imp
 
 ## Ideas
 
-Maybe this tool could enable even higher-order programming?
+Maybe this tool could enable even higher-level programming?
 
 Encourage clean code thinking? Think in terms of nouns and verbs to create more declarative code?
 
