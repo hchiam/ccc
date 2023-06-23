@@ -6,6 +6,11 @@ Conversationally create code with this interactive programming interface.
 
 You describe a code instruction, and the interface will ask you questions to implement it.
 
+**UPDATE:** won't be working on this anymore - see repos like:
+
+- https://github.com/hchiam/learning-gpt4all
+- https://github.com/hchiam/learning-prompt-eng
+
 ## Ideas
 
 Maybe this tool could enable even higher-level programming?
@@ -46,7 +51,12 @@ Which generates this JS code:
 ```js
 // VARIABLES and FUNCTIONS:
 let something = "Hello world";
-let say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+let say = function (words) {
+  /*uses external library*/ responsiveVoice.speak(
+    '"' + words + '"',
+    "UK English Male"
+  );
+};
 
 // USAGE:
 this.resetSharedVariables();
@@ -77,7 +87,12 @@ Which generates this JS code:
 ```js
 // VARIABLES and FUNCTIONS:
 let fox = {};
-fox.say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+fox.say = function (words) {
+  /*uses external library*/ responsiveVoice.speak(
+    '"' + words + '"',
+    "UK English Male"
+  );
+};
 let words = "hi";
 
 // USAGE:
@@ -115,9 +130,16 @@ Which re-generates this JS code:
 ```js
 // VARIABLES and FUNCTIONS:
 let fox = {};
-fox.say = function(words) { /*uses external library*/responsiveVoice.speak('"' + words + '"', 'UK English Male'); };
+fox.say = function (words) {
+  /*uses external library*/ responsiveVoice.speak(
+    '"' + words + '"',
+    "UK English Male"
+  );
+};
 fox.mouth = {};
-fox.mouth.eat = function(food) { alert(food); };
+fox.mouth.eat = function (food) {
+  alert(food);
+};
 let words = "hi";
 let food = "pests";
 
@@ -130,9 +152,10 @@ fox.mouth.eat(food);
 ### Built-in Things to Try:
 
 Try these:
-* "move to a position" (when you're prompted for a value, enter "top"/"bottom"/"middle"/etc., listed in the if block.)
-* "say something"
-* "what does the fox say"
+
+- "move to a position" (when you're prompted for a value, enter "top"/"bottom"/"middle"/etc., listed in the if block.)
+- "say something"
+- "what does the fox say"
 
 ### Related Work:
 
